@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✂️🪒💈 Barber Shop - Gestão Kevin 💈🪒✂️</title>
+    <style>
+        h1 { font-size: 18px; margin: 15px 0; }
+        body { font-family: sans-serif; background: #000; color: #fff; text-align: center; margin: 0; padding: 10px; }
+        .container { max-width: 450px; margin: 10px auto; background: #1a1a1a; padding: 20px; border-radius: 10px; border: 1px solid #333; box-sizing: border-box; }
+        .tabs { display: flex; justify-content: space-around; background: #222; margin-bottom: 20px; border-radius: 10px; position: sticky; top: 5px; z-index: 100; border: 1px solid #444; }
+        .tab-btn { flex: 1; padding: 15px 5px; border: none; background: #222; color: #888; cursor: pointer; font-weight: bold; font-size: 13px; outline: none; }
+        .tab-btn.active { background: #333; }
+        .secao-adm { display: none; }
+        .secao-adm.ativa { display: block; }
+        
+        input, select, button { width: 100%; padding: 12px; margin: 5px 0; border-radius: 5px; border: 1px solid #444; background: #222; color: #fff; box-sizing: border-box; }
+        .input-busca { margin-top: 15px; border: 1px solid #555; background: #111; font-style: italic; border-left: 4px solid #888; }
+        
+        button { cursor: pointer; font-weight: bold; border: none; }
+        .btn-agendar { background: #fff; color: #000; }
+        .btn-caixa { background: #25D366; color: #fff; }
+        .btn-fiado { background: #ff9800; color: #000; }
+        .btn-regularizar { background: #444; color: #fff; padding: 5px 10px; width: auto; font-size: 12px; }
+        
+        table { width: 100%; margin-top: 10px; border-collapse: collapse; font-size: 14px; }
+        th, td { padding: 10px; border-bottom: 1px solid #333; text-align: center; }
+        .btn-tabela { background: none; color: #ff4444; cursor: pointer; font-size: 18px; width: auto; display: inline-block; }
+        .total-caixa { background: #25D366; color: #000; padding: 10px; border-radius: 5px; font-weight: bold; margin-top: 10px; }
+        
+        /* ESTILOS NOVOS PARA OS BOTÕES DE WHATSAPP */
+        .btn-zap-confirmar { background: #25D366; color: #fff; padding: 5px 8px; border-radius: 4px; text-decoration: none; font-size: 10px; display: inline-block; margin-bottom: 5px; }
+        .btn-zap-ocupado { background: #ff4444; color: #fff; padding: 5px 8px; border-radius: 4px; text-decoration: none; font-size: 10px; display: inline-block; margin-bottom: 5px; }
+        .linha-conflito { background-color: #441111 !important; } /* Cor para horário repetido */
+
+        #aba-agendar .container { border: 2px solid #00d4ff; }
+        @media (max-width: 420px) { th, td { padding: 8px 2px; font-size: 11px; } }
+    </style>
+</head>
+<body>
+
+    <h1>💈🪒 Kevin Barber Shop ✂️💈</h1>
+
+    <div class="tabs">
+        <button id="btn-ag" class="tab-btn active" onclick="abrirAba('aba-agendar')" style="color: #00d4ff; border-bottom: 3px solid #00d4ff;">📅 AGENDA</button>
+        <button id="btn-cx" class="tab-btn" onclick="abrirAba('aba-caixa')">💰 CAIXA</button>
+        <button id="btn-fd" class="tab-btn" onclick="abrirAba('aba-fiado')">⚠️ FIADOS</button>
+    </div>
+
+    <div id="aba-agendar" class="secao-adm ativa">
+        <div class="container">
+            <h3 style="color: #00d4ff;">📅 Novo Agendamento</h3>
+            <form onsubmit="enviarAgendamento(event)">
+                <input type="text" id="cliente" placeholder="Nome do Cliente" required>
+                <input type="text" id="whatsapp" placeholder="WhatsApp (DDD)">
+                <input type="date" id="data" required>
+                <input type="time" id="hora" required>
+                <select id="servico">
+                    <option value="Corte Social">Corte Social</option>
+                    <option value="Barba">Barba</option>
+                    <option value="Corte e Barba">Corte e Barba</option>
+                    <option value="Corte com Degradê">Corte com Degradê</option>
+                    <option value="Corte na Tesoura">Corte na Tesoura</option>
+                    <option value="Corte na Máquina">Corte na Máquina</option>
+                    <option value="Outros">Outros</option>
+                </select>
+                <button type="submit" class="btn-agendar">Confirmar Horário</button>
+            </form>
+        </div>
+        <h3>📋 Agenda de Hoje</h3>
+        <input type="text" id="busca-agendar" class="input-busca" placeholder="🔍 Buscar na agenda..." onkeyup="filtrarTabela('tabela-corpo', 'busca-agendar')">
+        <table>
+            <thead><tr><th>Data/Hora</th><th>Cliente/WhatsApp</th><th>Ação</th></tr></thead>
+            <tbody id="tabela-corpo"></tbody>
+        </table>
+    </div>
+
+    <div id="aba-caixa" class="secao-adm">
+        <div class="container" style="border: 2px solid #25D366;">
+            <h3 style="color: #25D366;">🛒 Frente de Caixa</h3>
+            <form onsubmit="finalizarVenda(event)">
+                <input type="text" id="caixa-cliente" placeholder="Nome do Cliente" required>
+                <input type="text" id="caixa-servico" placeholder="Serviço ou Produto" required>
+                <input type="number" id="caixa-valor" placeholder="Valor R$" step="0.01" required>
+                <select id="caixa-pagamento">
+                    <option value="Pix">Pix</option>
+                    <option value="Dinheiro">Dinheiro</option>
+                    <option value="Cartão">Cartão</option>
+                </select>
+                <button type="submit" class="btn-caixa">Finalizar e Salvar</button>
+            </form>
+        </div>
+        <h3>📊 Relatório de Vendas</h3>
+        <div id="resumo-total" class="total-caixa">Total em Caixa: R$ 0,00</div>
+        <input type="text" id="busca-caixa" class="input-busca" placeholder="🔍 Buscar no relatório..." onkeyup="filtrarTabela('tabela-vendas', 'busca-caixa')">
+        <table>
+            <thead><tr><th>Data</th><th>Cliente</th><th>Valor</th><th>Ação</th></tr></thead>
+            <tbody id="tabela-vendas"></tbody>
+        </table>
+    </div>
+
+    <div id="aba-fiado" class="secao-adm">
+        <div class="container" style="border: 2px solid #ff9800;">
+            <h3 style="color: #ff9800;">📝 Registrar Fiado</h3>
+            <form onsubmit="enviarFiado(event)">
+                <input type="text" id="fiado-cliente" placeholder="Nome do Devedor" required>
+                <input type="text" id="fiado-zap" placeholder="WhatsApp (DDD)" required>
+                <input type="number" id="fiado-valor" placeholder="Valor R$" step="0.01" required>
+                <input type="date" id="fiado-vencimento" required>
+                <button type="submit" class="btn-fiado">Gravar Fiado</button>
+            </form>
+        </div>
+        <h3>💸 Lista de Devedores</h3>
+        <input type="text" id="busca-fiado" class="input-busca" placeholder="🔍 Buscar devedor..." onkeyup="filtrarTabela('tabela-fiados', 'busca-fiado')">
+        <table>
+            <thead><tr><th>Nome</th><th>Valor</th><th>Data</th><th>Venc.</th><th>Ação</th></tr></thead>
+            <tbody id="tabela-fiados"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const URL_API = "https://script.google.com/macros/s/AKfycbz1O8wr4ihdodpAunIgZWKjYVNYv0A_btcBsC_3XPw_JLNLwnsFsHP52lAo5wK_dS4NMQ/exec";
+
+        function filtrarTabela(idTabela, idInput) {
+            const input = document.getElementById(idInput);
+            const filtro = input.value.toLowerCase();
+            const tabela = document.getElementById(idTabela);
+            const linhas = tabela.getElementsByTagName("tr");
+            for (let i = 0; i < linhas.length; i++) {
+                const textoLinha = linhas[i].textContent || linhas[i].innerText;
+                linhas[i].style.display = textoLinha.toLowerCase().indexOf(filtro) > -1 ? "" : "none";
+            }
+        }
+
+        function abrirAba(nome) {
+            document.querySelectorAll('.secao-adm').forEach(div => div.classList.remove('ativa'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.style.color = "#888";
+                btn.style.borderBottom = "none";
+            });
+            document.getElementById(nome).classList.add('ativa');
+            let cor; let btnId;
+            if (nome === 'aba-agendar') { cor = "#00d4ff"; btnId = 'btn-ag'; carregarDados(); }
+            else if (nome === 'aba-caixa') { cor = "#25D366"; btnId = 'btn-cx'; carregarRelatorio(); }
+            else if (nome === 'aba-fiado') { cor = "#ff9800"; btnId = 'btn-fd'; carregarFiados(); }
+            const btnAtivo = document.getElementById(btnId);
+            btnAtivo.classList.add('active');
+            btnAtivo.style.color = cor;
+            btnAtivo.style.borderBottom = "3px solid " + cor;
+        }
+
+        async function carregarDados() {
+            const res = await fetch(URL_API + "?aba=Agendamentos");
+            const dados = await res.json();
+            const corpo = document.getElementById('tabela-corpo');
+            corpo.innerHTML = "";
+
+            // LOGICA PARA CONTAR HORARIOS IGUAIS
+            const contagemHorarios = {};
+            dados.forEach(item => { if(item[0]){ const chave = item[2]+item[3]; contagemHorarios[chave] = (contagemHorarios[chave] || 0) + 1; } });
+
+            dados.forEach(item => {
+                if (item[0]) {
+                    let nome = item[0];
+                    let zap = item[1] || "";
+                    let dataBruta = item[2];
+                    let horaBruta = item[3];
+                    let dataF = dataBruta.includes('T') ? dataBruta.split('T')[0].split('-').reverse().join('/') : dataBruta;
+                    let horaF = "";
+                    if (horaBruta.includes('T')) {
+                        let dataAux = new Date(horaBruta);
+                        let ajusteMS = (3 * 60 * 60 * 1000) + (6 * 60 * 1000);
+                        let dataCorrigida = new Date(dataAux.getTime() - ajusteMS);
+                        horaF = dataCorrigida.getUTCHours().toString().padStart(2, '0') + ":" + dataCorrigida.getUTCMinutes().toString().padStart(2, '0');
+                    } else { horaF = horaBruta.substring(0, 5); }
+
+                    // VERIFICA SE É REPETIDO
+                    const chaveAtual = dataBruta + horaBruta;
+                    const ehConflito = contagemHorarios[chaveAtual] > 1;
+                    const classeLinha = ehConflito ? "class='linha-conflito'" : "";
+
+                    // TEXTOS PARA WHATSAPP
+                    const msgOk = encodeURIComponent(`Olá ${nome}, seu agendamento para o dia ${dataF} às ${horaF} está CONFIRMADO! ✅💈`);
+                    const msgErro = encodeURIComponent(`Olá ${nome}, o horário das ${horaF} que você escolheu está INDISPONÍVEL. ❌ Por favor, escolha outro.`);
+
+                    // BOTÃO DINÂMICO
+                    let botaoZap = ehConflito 
+                        ? `<a href="https://wa.me/55${zap}?text=${msgErro}" target="_blank" class="btn-zap-ocupado">OCUPADO 🚫</a>`
+                        : `<a href="https://wa.me/55${zap}?text=${msgOk}" target="_blank" class="btn-zap-confirmar">CONFIRMAR ✅</a>`;
+
+                    corpo.innerHTML += `<tr ${classeLinha}>
+                        <td>${dataF}<br><b>${horaF}</b></td>
+                        <td>${nome}<br><small>${zap}</small></td>
+                        <td>${botaoZap}<br><button class="btn-tabela" onclick="apagar('${nome}','Agendamentos')">🗑️</button></td>
+                    </tr>`;
+                }
+            });
+        }
+
+        // --- AS DEMAIS FUNÇÕES (CAIXA, FIADO, ENVIAR, APAGAR) CONTINUAM EXATAMENTE IGUAIS ---
+        async function carregarRelatorio() {
+            const res = await fetch(URL_API + "?aba=Frente_Caixa");
+            const dados = await res.json();
+            const corpo = document.getElementById('tabela-vendas');
+            const totalBox = document.getElementById('resumo-total');
+            corpo.innerHTML = ""; let total = 0;
+            dados.forEach(item => {
+                if (item[0]) {
+                    let dataBruta = item[0]; let dataFormatada = "";
+                    try { const dataObj = new Date(dataBruta); dataFormatada = dataObj.toLocaleDateString('pt-BR', { timeZone: 'UTC' }); } catch (e) { dataFormatada = dataBruta; }
+                    let cliente = item[1]; let v = parseFloat(item[3] || 0); total += v;
+                    corpo.innerHTML += `<tr><td>${dataFormatada}</td><td>${cliente}</td><td>R$ ${v.toFixed(2).replace('.',',')}</td><td><button class="btn-tabela" onclick="apagar('${cliente}','Frente_Caixa')">🗑️</button></td></tr>`;
+                }
+            });
+            totalBox.innerText = "Total em Caixa: R$ " + total.toFixed(2).replace('.',',');
+        }
+
+        async function carregarFiados() {
+            const res = await fetch(URL_API + "?aba=Fiado");
+            const dados = await res.json();
+            const corpo = document.getElementById('tabela-fiados');
+            corpo.innerHTML = ""; const hoje = new Date(); hoje.setHours(0,0,0,0);
+            dados.forEach(item => {
+                if (item[0]) {
+                    let nome = item[0]; let zap = item[1]; let valor = parseFloat(item[2]).toFixed(2).replace('.',',');
+                    let dataC = item[3] ? new Date(item[3]).toLocaleDateString('pt-BR') : '-';
+                    let dataVenc = item[4] ? new Date(item[4]) : null;
+                    let vencFormatado = dataVenc ? dataVenc.toLocaleDateString('pt-BR') : '-';
+                    let corTexto = (dataVenc && hoje > dataVenc) ? 'color: #ff4444; font-weight: bold;' : 'color: #fff;';
+                    corpo.innerHTML += `<tr style="${corTexto}"><td>${nome}</td><td>R$ ${valor}</td><td>${dataC}</td><td>${vencFormatado}</td><td>
+                        <button style="background:none; border:none; font-size:20px; cursor:pointer;" onclick="window.open('https://api.whatsapp.com/send?phone=55${zap}&text=Olá ${nome}, passando para lembrar do acerto de R$ ${valor}')">💬</button>
+                        <button class="btn-regularizar" onclick="apagar('${nome}','Fiado')">Regularizar</button>
+                    </td></tr>`;
+                }
+            });
+        }
+
+        async function enviarAgendamento(event) {
+            event.preventDefault();
+            const dados = { action: "add", aba: "Agendamentos", cliente: document.getElementById("cliente").value, whatsapp: document.getElementById("whatsapp").value, data: document.getElementById("data").value, hora: document.getElementById("hora").value, servico: document.getElementById("servico").value };
+            await enviarGenerico(dados, "Agendamento realizado!");
+        }
+
+        async function finalizarVenda(event) {
+            event.preventDefault();
+            const dados = { aba: "Frente_Caixa", action: "add", data: new Date().toLocaleDateString('pt-BR'), cliente: document.getElementById('caixa-cliente').value, servico: document.getElementById('caixa-servico').value, valor: document.getElementById('caixa-valor').value, pagamento: document.getElementById('caixa-pagamento').value };
+            await enviarGenerico(dados, "Venda salva!");
+        }
+
+        async function enviarFiado(event) {
+            event.preventDefault();
+            const dados = { aba: "Fiado", action: "add", cliente: document.getElementById('fiado-cliente').value, whatsapp: document.getElementById('fiado-zap').value, valor: document.getElementById('fiado-valor').value, dataCorte: new Date().toLocaleDateString('pt-BR'), vencimento: document.getElementById('fiado-vencimento').value, status: "Pendente" };
+            await enviarGenerico(dados, "Fiado gravado!");
+        }
+
+        async function enviarGenerico(dados, msg) {
+            try {
+                const response = await fetch(URL_API, { method: "POST", body: JSON.stringify(dados) });
+                const respostaDoGoogle = await response.text();
+                if (respostaDoGoogle.includes("ERRO: OCUPADO")) { alert("❌ Horário já ocupado!"); }
+                else { alert("✅ " + msg); location.reload(); }
+            } catch (erro) { alert("Erro de conexão."); }
+        }
+
+        async function apagar(nome, aba) {
+            if(confirm("Deseja remover " + nome + "?")) {
+                const dados = { aba: aba, action: "delete", cliente: nome };
+                try {
+                    await fetch(URL_API, { method: "POST", mode: "no-cors", body: JSON.stringify(dados) });
+                    alert("Comando enviado!"); location.reload();
+                } catch (erro) { alert("Erro ao apagar."); }
+            }
+        }
+
+        window.onload = carregarDados;
+    </script>
+</body>
+</html>
+
+
+ 

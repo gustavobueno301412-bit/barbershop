@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendamento - Barbearia do Kevin 🪒💈✂️</title>
+    <style>
+        body { font-family: sans-serif; background-color: #1a1a1a; color: white; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .container { background-color: #262626; padding: 20px; border-radius: 10px; width: 100%; max-width: 400px; border: 2px solid #00ff88; }
+        h2 { text-align: center; color: #00ff88; }
+        input, select, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 5px; border: none; font-size: 16px; box-sizing: border-box; }
+        button { background-color: #00ff88; color: black; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>✂️ Reserve seu horário na Barbearia do Kevin 💈</h2>
+        <input type="text" id="cliente" placeholder="Seu Nome completo">
+        <input type="text" id="whatsapp" placeholder="Seu WhatsApp (DDD)">
+        <input type="date" id="data">
+        <input type="time" id="hora">
+        <select id="servico">
+            <option value="Corte Social">Corte Social</option>
+                    <option value="Barba">Barba</option>
+                    <option value="Corte e Barba">Corte e Barba</option>
+                    <option value="Corte com Degradê">Corte com Degradê</option>
+                    <option value="Corte na Tesoura">Corte na Tesoura</option>
+                    <option value="Corte na Máquina">Corte na Máquina</option>
+                    <option value="Outros">Outros</option>
+        </select>
+        <button onclick="agendar()">Confirmar Agendamento</button>
+    </div>
+
+    <script>
+        // COLOQUE O SEU LINK DA API DO GOOGLE AQUI ABAIXO
+        const URL_API = "https://script.google.com/macros/s/AKfycbz1O8wr4ihdodpAunIgZWKjYVNYv0A_btcBsC_3XPw_JLNLwnsFsHP52lAo5wK_dS4NMQ/exec";
+
+        async function agendar() {
+    const btn = document.querySelector("button");
+    const dados = {
+        action: "add",
+        aba: "Agendamentos",
+        cliente: document.getElementById('cliente').value,
+        whatsapp: document.getElementById('whatsapp').value,
+        data: document.getElementById('data').value,
+        hora: document.getElementById('hora').value,
+        servico: document.getElementById('servico').value
+    };
+
+    if(!dados.cliente || !dados.data || !dados.hora) return alert("Preencha o nome, data e hora!");
+
+    btn.disabled = true;
+    btn.innerText = "Verificando agenda...";
+
+    try {
+        // IMPORTANTE: Tiramos o 'no-cors' para ler a resposta do Google
+        const response = await fetch(URL_API, { method: 'POST', body: JSON.stringify(dados) });
+        const resultado = await response.text(); 
+
+        if (resultado.includes("ERRO: HORARIO OCUPADO")) {
+            alert("❌ ESSE HORÁRIO JÁ ESTÁ RESERVADO! Escolha outro.");
+        } else {
+            alert("✅ Agendado com sucesso!");
+            // Limpa os campos
+            document.getElementById('cliente').value = "";
+            document.getElementById('data').value = "";
+            document.getElementById('hora').value = "";
+        }
+    } catch (error) {
+        alert("Agendamento enviado! Verifique com o barbeiro.");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Confirmar Agendamento";
+    }
+}
+
+    </script>
+</body>
+</html>
